@@ -4,7 +4,7 @@ Experiment design sizing for a product where the billable unit is a household ra
 
 **Live demo:** https://ianklassen.github.io/circle-assignment-sandbox
 
-Built by Ian Klassen. 
+Built by Ian Klassen. Single HTML file, no build step, no dependencies beyond two web fonts.
 
 ---
 
@@ -12,7 +12,7 @@ Built by Ian Klassen.
 
 Life360 sells to Circles and experiments on people. A paywall or a price is visible to everyone in the household, so assigning treatment at the user level means a parent sees one offer and their teenager sees another. That breaks the product for the person already paying, and it contaminates both arms of the test.
 
-Assigning at the Circle level fixes it. It also costs you, because you now have fewer independent units and their sizes vary, which inflates variance and lengthens the test. Most teams find this out in week six of an eight week window.
+Assigning at the Circle level fixes it. It also costs you, because you now have fewer independent units and their sizes vary, which inflates variance and lengthens the test. That cost is worth knowing when the test is designed rather than when it is read.
 
 This tool sizes both costs before the test ships.
 
