@@ -165,7 +165,7 @@ tr.quiet td{opacity:.5}
       <div>
         <span class="eyebrow">What you get out of it</span>
         <p>Three designs sized side by side: how many households get split, how long each takes to read,
-        and what variance reduction buys back.</p>
+        and how much time you save by adjusting for what those households were already doing before the test.</p>
         <p>Then an independent validity gate rules on the design you picked. It does not care how fast
         the design is. <b>The fastest design and the trustworthy one are rarely the same design</b>, and
         the gate is what stops you shipping the fast one.</p>
@@ -174,7 +174,7 @@ tr.quiet td{opacity:.5}
 
     <div class="steps">
       <div class="step"><span class="stepn">Step 01</span><h3>Pick a design</h3>
-        <p>User level, Circle level, or Circle level with variance reduction.</p></div>
+        <p>Assign each person, each Circle, or each Circle with the analysis adjusted for past behaviour.</p></div>
       <div class="step"><span class="stepn">Step 02</span><h3>Describe the population</h3>
         <p>Household sizes, how much Circles overlap, and how alike members of one Circle are.</p></div>
       <div class="step"><span class="stepn">Step 03</span><h3>Read the sizing</h3>
@@ -194,7 +194,7 @@ tr.quiet td{opacity:.5}
           <select id="scheme">
             <option value="user">Each person independently</option>
             <option value="circle" selected>Each Circle as a unit</option>
-            <option value="cuped">Each Circle, with variance reduction</option>
+            <option value="cuped">Each Circle, adjusting for past behaviour</option>
           </select>
           <p class="hint" id="schemeHint"></p>
         </div>
@@ -256,9 +256,9 @@ tr.quiet td{opacity:.5}
           <input type="range" id="mde" min="2" max="40" step="1" value="10">
         </div>
         <div class="ctl">
-          <label for="rho">Strength of pre period data <span class="val" id="rhoV"></span></label>
+          <label for="rho">How well the past predicts the metric <span class="val" id="rhoV"></span></label>
           <input type="range" id="rho" min="0" max="90" step="5" value="50">
-          <p class="hint">How well past behaviour predicts the metric. Only used by the variance reduction design.</p>
+          <p class="hint" id="rhoHint"></p>
         </div>
         <div class="ctl">
           <label for="horizon">Weeks you actually have <span class="val" id="horizonV"></span></label>
@@ -279,7 +279,7 @@ tr.quiet td{opacity:.5}
             <th></th>
             <th id="hUser">Each person</th>
             <th id="hCircle">Each Circle</th>
-            <th id="hCuped">Circle + variance reduction</th>
+            <th id="hCuped">Circle, adjusted for past behaviour</th>
           </tr></thead>
           <tbody id="cmpBody"></tbody>
         </table>
@@ -331,7 +331,7 @@ tr.quiet td{opacity:.5}
     <ul>
       <li>Design effect for unequal cluster sizes: <span class="mono">1 + ((CV&sup2; + 1) &middot; m&#772; &minus; 1) &middot; ICC</span>, where m&#772; is mean Circle size and CV its coefficient of variation. Equal size clusters reduce this to the familiar <span class="mono">1 + (m&#772; &minus; 1) &middot; ICC</span>.</li>
       <li>Sample size per arm, two proportion test at 5% two sided and 80% power: <span class="mono">2(z<sub>&alpha;/2</sub> + z<sub>&beta;</sub>)&sup2; &middot; p&#772;(1&minus;p&#772;) / &delta;&sup2;</span>, then multiplied by the design effect.</li>
-      <li>Variance reduction (CUPED) scales required sample by <span class="mono">1 &minus; &rho;&sup2;</span>, where &rho; is the correlation between the pre period covariate and the metric.</li>
+      <li>Adjusting for past behaviour, the technique usually called CUPED, scales required sample by <span class="mono">1 &minus; &rho;&sup2;</span>, where &rho; is the correlation between a pre period covariate and the metric. It changes only the analysis, never who is assigned to what, which is why that column differs from plain Circle assignment on runtime alone.</li>
       <li>Probability a Circle of size m is split by person level assignment: <span class="mono">1 &minus; 0.5<sup>m&minus;1</sup></span>. Same form for a person in m Circles receiving conflicting assignments.</li>
       <li>Household size and overlap distributions are illustrative, not Life360 data. The structure is what transfers. Replace the distributions with real ones and every number here sharpens.</li>
     </ul>
@@ -357,11 +357,11 @@ var OVERLAP = {
   mixed: { d:{1:0.65,2:0.22,3:0.09,4:0.03,5:0.01} },
   high:  { d:{1:0.45,2:0.28,3:0.15,4:0.08,5:0.04} }
 };
-var SCHEME_LABEL = { user:"Each person independently", circle:"Each Circle as a unit", cuped:"Each Circle, with variance reduction" };
+var SCHEME_LABEL = { user:"Each person independently", circle:"Each Circle as a unit", cuped:"Each Circle, adjusting for past behaviour" };
 var SCHEME_HINT = {
   user:"Fastest on paper. Only honest when the change is invisible to everyone else in the Circle.",
   circle:"The whole household gets one experience. Fewer independent units, so the same test runs longer.",
-  cuped:"Same assignment, but past behaviour absorbs some of the noise, which buys back much of the runtime."
+  cuped:"Identical assignment. The difference is in the analysis: what a Circle did before the test is used to subtract differences that were already there, so what is left is a cleaner read on the change itself. Less noise means a shorter test."
 };
 var ICC_HINT = function(v){
   return v < 8  ? "Barely alike. One member's behaviour says little about the others."
@@ -447,7 +447,7 @@ function gate(o, chosen, r){
 
 var LEVER = {
   V1:"Move to Circle level assignment. It costs weeks. It is the only version that produces an answer you can act on.",
-  V2:"Raise the effect you are willing to detect, add variance reduction, widen eligibility, or accept that this question needs a different method than an A/B test."
+  V2:"Raise the effect you are willing to detect, adjust for past behaviour, widen eligibility, or accept that this question needs a different method than an A/B test."
 };
 var CONDITION = {
   V3:"Assign on a stable key, usually the person's primary Circle, and inherit that assignment to every other Circle they belong to.",
@@ -510,7 +510,14 @@ function render(){
   el("weeklyV").textContent = fmt(o.weekly);
   el("pV").textContent = (o.p*100).toFixed(1)+"%";
   el("mdeV").textContent = "+"+Math.round(o.mde*100)+"%";
-  el("rhoV").textContent = o.rho===0 ? "none" : o.rho.toFixed(2);
+  el("rhoV").textContent = o.rho===0 ? "not at all" : o.rho.toFixed(2);
+  el("rhoHint").textContent = o.rho===0
+    ? "Past behaviour tells you nothing about who converts, so there is nothing to subtract and this design saves no time at all."
+    : o.rho < 0.35
+      ? "A weak signal. Some noise comes out, but most of the runtime saving is not available."
+      : o.rho < 0.65
+        ? "A usable signal, which is the normal case when you have a few months of history on a Circle."
+        : "A strong signal. Past behaviour explains most of who converts, so a large share of the noise can be removed before the test is even read.";
   el("horizonV").textContent = o.horizon+" wks";
   el("schemeHint").textContent = SCHEME_HINT[o.scheme];
 
