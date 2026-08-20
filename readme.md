@@ -4,15 +4,15 @@ Experiment design sizing for a product where the billable unit is a household ra
 
 **Live demo:** https://ianklassen.github.io/circle-assignment-sandbox
 
-Built by Ian Klassen.
+Built by Ian Klassen. 
 
 ---
 
 ## The problem
 
-Life360 sells to Circles and experiments on people. A paywall or a price is visible to everyone in the household, so assigning treatment at the user level means a parent sees one offer and their teenager sees another. That breaks the product for the person already paying, and it contaminates both arms of the test.
+Life360 sells to Circles but experiments are typically conducted on people. A paywall or a price is visible to everyone in the household, so assigning treatment at the user level means a parent sees one offer and their teenager may see another. That breaks the product for the person already paying and it contaminates both arms of the test.
 
-Assigning at the Circle level fixes it. It also costs you, because you now have fewer independent units and their sizes vary, which inflates variance and lengthens the test. Most teams find this out in week six of an eight week window.
+Assigning at the Circle level fixes it, but it may have a cost, because you now have fewer independent units and their sizes vary, which inflates variance and lengthens the test. 
 
 This tool sizes both costs before the test ships.
 
@@ -22,7 +22,7 @@ Three designs measured side by side:
 
 - **Each person independently.** Fastest on paper, and only honest when the change is invisible to everyone else in the Circle.
 - **Each Circle as a unit.** Valid for anything household visible. Slower.
-- **Each Circle, with variance reduction.** Same assignment, with pre period behaviour absorbing some of the noise, which buys back most of the runtime.
+- **Each Circle, adjusting for past behaviour.** Identical assignment. The difference is in the analysis: what a Circle did before the test starts is used to subtract differences that were already there, so what is left is a cleaner read on the change itself. Less noise means a shorter test. The technique is usually called Controlled-Experiment Using Pre-Existing Data (CUPED). It only helps if past behaviour actually predicts the metric, and it does nothing for Circles with no history.
 
 For each: how many households get split, how many people receive conflicting assignment, the clustering penalty, Circles required, and weeks to a readable result.
 
@@ -32,7 +32,7 @@ Then an independent validity gate rules on the design you chose. It never sees w
 
 - Design effect for unequal cluster sizes: `1 + ((CV² + 1) · m̄ − 1) · ICC`, where m̄ is mean Circle size and CV its coefficient of variation. Equal size clusters collapse this to the familiar `1 + (m̄ − 1) · ICC`.
 - Sample size per arm, two proportion test at 5% two sided and 80% power: `2(z_α/2 + z_β)² · p̄(1−p̄) / δ²`, multiplied by the design effect.
-- Variance reduction (CUPED) scales required sample by `1 − ρ²`, where ρ is the correlation between the pre period covariate and the metric.
+- Adjusting for past behaviour scales required sample by `1 − ρ²`, where ρ is the correlation between a pre period covariate and the metric. It changes the analysis, never the assignment, which is why that column differs from plain Circle assignment on runtime alone.
 - Probability that a Circle of size m is split by person level assignment: `1 − 0.5^(m−1)`. The same form gives the probability that a person belonging to m Circles receives conflicting assignments.
 
 Household size and Circle overlap distributions are illustrative, not Life360 data. The structure is what transfers. Replace the distributions with real ones and every number sharpens.
