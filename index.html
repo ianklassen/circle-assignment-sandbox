@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circle Assignment Sandbox · Experiment design for a household product</title>
+<meta property="og:title" content="Circle Assignment Sandbox">
+<meta property="og:description" content="Sizing the cost of randomizing households instead of people, before you run the test.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#EEF1F4; --paper:#FBFCFD; --ink:#10202B; --ink-2:#4A5D6B;
+  --rule:#C6CFD6; --rule-2:#DDE4E9;
+  --desk:#1B4D6B; --gate:#A06A12; --decline:#7A2130; --pass:#1F6A4A;
+  --f-display:"Archivo",system-ui,sans-serif;
+  --f-body:"Source Serif 4",Georgia,serif;
+  --f-data:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 96px}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.grid > *{min-width:0}
+
+.eyebrow{font-family:var(--f-data);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+.masthead{padding:52px 0 30px;border-bottom:2px solid var(--ink)}
+.masthead h1{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,5.4vw,58px);line-height:.99;letter-spacing:-.025em;margin:14px 0 0;max-width:18ch}
+.thesis{margin:18px 0 0;max-width:64ch;font-size:18px;color:var(--ink-2)}
+.thesis strong{color:var(--ink);font-weight:600}
+
+.frame{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--rule);background:var(--paper);margin-top:28px;border-radius:2px}
+.frame > div{padding:20px 22px}
+.frame > div + div{border-left:1px solid var(--rule-2)}
+.frame .eyebrow{display:block;margin-bottom:9px}
+.frame p{margin:0;font-size:15px;line-height:1.55}
+.frame p + p{margin-top:9px}
+.frame b{font-weight:600}
+
+.steps{display:grid;grid-template-columns:repeat(4,1fr);margin-top:26px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.step{padding:16px 18px 17px 0}
+.step + .step{padding-left:18px;border-left:1px solid var(--rule-2)}
+.stepn{font-family:var(--f-data);font-size:11px;letter-spacing:.14em;color:var(--gate);display:block;margin-bottom:6px}
+.step h3{font-family:var(--f-display);font-weight:600;font-size:14.5px;margin:0 0 4px}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.45}
+.tag-step{font-family:var(--f-data);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--gate);border:1px solid var(--gate);padding:2px 6px;border-radius:2px;margin-right:8px}
+
+.grid{display:grid;grid-template-columns:330px 1fr}
+.rail{border-right:1px solid var(--rule);padding:28px 26px 40px 0}
+.stage{padding:28px 0 40px 30px}
+.set{margin-bottom:24px}
+.set > .eyebrow{display:block;padding-bottom:7px;border-bottom:1px solid var(--rule-2);margin-bottom:14px}
+.set.design{border:1px solid var(--desk);background:rgba(27,77,107,.04);padding:15px 16px 4px;border-radius:2px}
+.set.design > .eyebrow{border-bottom-color:rgba(27,77,107,.25)}
+.ctl{margin-bottom:15px}
+.ctl label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-family:var(--f-display);font-size:12.5px;font-weight:600}
+.val{font-family:var(--f-data);font-size:12px;color:var(--desk);font-weight:500}
+input[type=range]{width:100%;margin:7px 0 0;accent-color:var(--desk);height:18px}
+select{width:100%;margin-top:6px;padding:7px 8px;font-family:var(--f-data);font-size:12px;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:2px}
+select:focus-visible,input:focus-visible{outline:2px solid var(--gate);outline-offset:1px}
+.hint{font-size:12.5px;color:var(--ink-2);margin:5px 0 0;line-height:1.4}
+
+.stage-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+.stage-num{font-family:var(--f-data);font-size:11px;letter-spacing:.14em;padding:3px 7px;border-radius:2px;color:#fff;background:var(--desk)}
+.stage-num.g{background:var(--gate)}
+.stage-title{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:-.015em}
+.stage-sub{font-size:14.5px;color:var(--ink-2);margin:2px 0 18px;max-width:62ch}
+
+.cmp{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--paper);border:1px solid var(--rule);border-top:3px solid var(--desk);min-width:600px}
+.cmp th{text-align:center;font-family:var(--f-display);font-size:12.5px;font-weight:600;padding:11px 12px;border-bottom:1px solid var(--rule);border-left:1px solid var(--rule-2)}
+.cmp th:first-child{text-align:left;font-family:var(--f-data);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2);font-weight:500;border-left:0}
+.cmp td{padding:9px 12px;border-bottom:1px solid var(--rule-2);border-left:1px solid var(--rule-2);text-align:center;font-family:var(--f-data);font-size:12.5px}
+.cmp td:first-child{text-align:left;font-family:var(--f-body);font-size:13.5px;border-left:0}
+.cmp tr:last-child td{border-bottom:0}
+.cmp .chosen{background:#E7EEF3}
+.cmp th.chosen{background:var(--desk);color:#fff}
+.cmp .bad{color:var(--decline)}
+.cmp .good{color:var(--pass)}
+.cmp .headline{font-size:17px;font-weight:600}
+
+.seal{margin:28px 0 24px}
+.seal-bar{border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);background:repeating-linear-gradient(-45deg,transparent 0 7px,rgba(160,106,18,.10) 7px 14px);padding:13px 18px}
+.seal-label{font-family:var(--f-data);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gate);margin-bottom:9px}
+.seal-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.seal-col .eyebrow{display:block;font-size:10px;margin-bottom:5px}
+.seal-list{font-family:var(--f-data);font-size:11.5px;line-height:1.75}
+.seal-list.withheld{color:var(--ink-2);text-decoration:line-through;text-decoration-thickness:1px}
+
+.gate-card{background:var(--paper);border:1px solid var(--rule);border-top:3px solid var(--gate);border-radius:2px}
+.gate-verdict{padding:18px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--rule-2);flex-wrap:wrap}
+.stamp{font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;border:2px solid currentColor;padding:6px 13px;border-radius:2px;transform:rotate(-1.4deg)}
+.stamp.valid{color:var(--pass)} .stamp.caveated{color:var(--gate)} .stamp.invalid{color:var(--decline)}
+.gate-verdict p{margin:0;font-size:14px;color:var(--ink-2);flex:1;min-width:250px;line-height:1.45}
+.rules{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+.rules th{text-align:left;font-family:var(--f-data);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2);font-weight:500;padding:9px 20px;border-bottom:1px solid var(--rule-2)}
+.rules td{padding:9px 20px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+.rules tr:last-child td{border-bottom:0}
+.rid{font-family:var(--f-data);font-size:11.5px;color:var(--ink-2);white-space:nowrap}
+.rname{font-family:var(--f-display);font-weight:600;font-size:12.5px;white-space:nowrap}
+.rfind{color:var(--ink-2);line-height:1.42}
+.tag{font-family:var(--f-data);font-size:10.5px;letter-spacing:.09em;padding:2px 7px;border:1px solid currentColor;border-radius:2px;white-space:nowrap}
+.tag.pass{color:var(--pass)} .tag.refer{color:var(--gate)} .tag.decline{color:var(--decline)}
+tr.quiet td{opacity:.5}
+
+.action{margin-top:18px;border:1px solid var(--ink);background:var(--paper);border-radius:2px}
+.action-h{padding:12px 20px;border-bottom:1px solid var(--rule-2);display:flex;align-items:center;gap:10px}
+.action-body{padding:16px 20px 18px}
+.action-body p{margin:0 0 10px;font-size:14.5px;line-height:1.5}
+.action-body p:last-child{margin-bottom:0}
+.action-body ul{margin:2px 0 0;padding-left:19px}
+.action-body li{font-size:14px;line-height:1.5;margin-bottom:6px;color:var(--ink-2)}
+.action-body li b{color:var(--ink);font-weight:600}
+.summary{font-family:var(--f-data);font-size:12.5px;color:var(--ink-2);line-height:1.9;border-top:1px solid var(--rule-2);margin-top:14px;padding-top:12px}
+.summary b{color:var(--ink);font-weight:600}
+
+.section{margin-top:50px;padding-top:26px;border-top:2px solid var(--ink)}
+.section h2{font-family:var(--f-display);font-weight:700;font-size:26px;letter-spacing:-.02em;margin:10px 0 6px}
+.section p.lede{margin:0 0 20px;color:var(--ink-2);max-width:66ch;font-size:15.5px}
+.assump{margin-top:42px;padding-top:22px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-2)}
+.assump h3{font-family:var(--f-display);font-size:13px;font-weight:600;margin:0 0 8px;color:var(--ink)}
+.assump ul{margin:0 0 16px;padding-left:18px}
+.assump li{margin-bottom:5px;line-height:1.5}
+.assump .mono{font-family:var(--f-data);color:var(--ink)}
+.assump a{color:var(--desk)}
+
+@media (max-width:900px){
+  .grid{grid-template-columns:1fr}
+  .rail{border-right:0;border-bottom:1px solid var(--rule);padding:24px 0 30px}
+  .stage{padding:26px 0 30px}
+  .frame{grid-template-columns:1fr}
+  .frame > div + div{border-left:0;border-top:1px solid var(--rule-2)}
+  .steps{grid-template-columns:1fr}
+  .step{padding:14px 0}
+  .step + .step{padding-left:0;border-left:0;border-top:1px solid var(--rule-2)}
+  .seal-cols{grid-template-columns:1fr}
+  .wrap{padding:0 16px 72px}
+  .masthead{padding:36px 0 24px}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important} .stamp{transform:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <span class="eyebrow">Experiment design &middot; household products</span>
+    <h1>Circle Assignment Sandbox</h1>
+    <p class="thesis">
+      Life360 sells to households and experiments on people. Randomize the wrong unit and you either
+      split families across two different experiences, or you buy a trustworthy readout with weeks you
+      do not have. This sizes <strong>both</strong> costs before the test goes out.
+    </p>
+
+    <div class="frame">
+      <div>
+        <span class="eyebrow">The problem it solves</span>
+        <p>The billable unit is the Circle, so a paywall or a price is visible to the whole household.
+        Assign at the user level and a parent sees one offer while their teenager sees another, which
+        breaks the product and contaminates the readout.</p>
+        <p>Assign at the Circle level and the readout is clean, but you now have fewer independent units
+        and their sizes vary, so <b>the same test takes longer</b>. Most teams discover that in week six.</p>
+      </div>
+      <div>
+        <span class="eyebrow">What you get out of it</span>
+        <p>Three designs sized side by side: how many households get split, how long each takes to read,
+        and what variance reduction buys back.</p>
+        <p>Then an independent validity gate rules on the design you picked. It does not care how fast
+        the design is. <b>The fastest design and the trustworthy one are rarely the same design</b>, and
+        the gate is what stops you shipping the fast one.</p>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step"><span class="stepn">Step 01</span><h3>Pick a design</h3>
+        <p>User level, Circle level, or Circle level with variance reduction.</p></div>
+      <div class="step"><span class="stepn">Step 02</span><h3>Describe the population</h3>
+        <p>Household sizes, how much Circles overlap, and how alike members of one Circle are.</p></div>
+      <div class="step"><span class="stepn">Step 03</span><h3>Read the sizing</h3>
+        <p>Split households, design effect, and weeks to a readable result for all three.</p></div>
+      <div class="step"><span class="stepn">Step 04</span><h3>Check the gate</h3>
+        <p>Valid, valid with caveats, or not a test you should run.</p></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside class="rail">
+
+      <div class="set design">
+        <span class="eyebrow" style="color:var(--desk)">Step 01 &middot; the design you plan to run</span>
+        <div class="ctl">
+          <label for="scheme">Randomization unit</label>
+          <select id="scheme">
+            <option value="user">Each person independently</option>
+            <option value="circle" selected>Each Circle as a unit</option>
+            <option value="cuped">Each Circle, with variance reduction</option>
+          </select>
+          <p class="hint" id="schemeHint"></p>
+        </div>
+        <div class="ctl">
+          <label for="visible">Can the whole Circle see the change?</label>
+          <select id="visible">
+            <option value="yes" selected>Yes, it is a price, paywall, or shared feature</option>
+            <option value="no">No, it is private to one person</option>
+          </select>
+        </div>
+        <div class="ctl">
+          <label for="handling">People in more than one Circle</label>
+          <select id="handling">
+            <option value="byCircle" selected>Assign per Circle, accept the conflicts</option>
+            <option value="exclude">Leave them out of the test</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="set">
+        <span class="eyebrow">Step 02 &middot; the population</span>
+        <div class="ctl">
+          <label for="sizeMix">Household sizes</label>
+          <select id="sizeMix">
+            <option value="small">Mostly couples and small families</option>
+            <option value="typical" selected>A typical family mix</option>
+            <option value="wide">Wide range, some large Circles</option>
+          </select>
+          <p class="hint" id="mixHint"></p>
+        </div>
+        <div class="ctl">
+          <label for="overlap">Circle overlap</label>
+          <select id="overlap">
+            <option value="low">Most people are in one Circle</option>
+            <option value="mixed" selected>A meaningful minority are in several</option>
+            <option value="high">Heavy overlap</option>
+          </select>
+        </div>
+        <div class="ctl">
+          <label for="icc">How alike are members of one Circle <span class="val" id="iccV"></span></label>
+          <input type="range" id="icc" min="1" max="45" step="1" value="15">
+          <p class="hint" id="iccHint"></p>
+        </div>
+        <div class="ctl">
+          <label for="weekly">Circles entering per week <span class="val" id="weeklyV"></span></label>
+          <input type="range" id="weekly" min="500" max="40000" step="500" value="5000">
+        </div>
+      </div>
+
+      <div class="set">
+        <span class="eyebrow">Step 02 &middot; the effect you are chasing</span>
+        <div class="ctl">
+          <label for="p">Baseline conversion <span class="val" id="pV"></span></label>
+          <input type="range" id="p" min="5" max="200" step="1" value="30">
+          <p class="hint">Per thousand. 30 means 3%.</p>
+        </div>
+        <div class="ctl">
+          <label for="mde">Smallest lift worth detecting <span class="val" id="mdeV"></span></label>
+          <input type="range" id="mde" min="2" max="40" step="1" value="10">
+        </div>
+        <div class="ctl">
+          <label for="rho">Strength of pre period data <span class="val" id="rhoV"></span></label>
+          <input type="range" id="rho" min="0" max="90" step="5" value="50">
+          <p class="hint">How well past behaviour predicts the metric. Only used by the variance reduction design.</p>
+        </div>
+        <div class="ctl">
+          <label for="horizon">Weeks you actually have <span class="val" id="horizonV"></span></label>
+          <input type="range" id="horizon" min="1" max="26" step="1" value="8">
+        </div>
+      </div>
+    </aside>
+
+    <main class="stage">
+      <div style="margin-bottom:14px"><span class="tag-step">Step 03</span><span class="eyebrow">Read the sizing</span></div>
+
+      <div class="stage-head"><span class="stage-num">Stage 1</span><span class="stage-title">Sizing bench</span></div>
+      <p class="stage-sub">Deterministic. Standard cluster randomization arithmetic, shown for all three designs so the trade is visible rather than asserted.</p>
+
+      <div class="scroll">
+        <table class="cmp">
+          <thead><tr>
+            <th></th>
+            <th id="hUser">Each person</th>
+            <th id="hCircle">Each Circle</th>
+            <th id="hCuped">Circle + variance reduction</th>
+          </tr></thead>
+          <tbody id="cmpBody"></tbody>
+        </table>
+      </div>
+
+      <div class="seal">
+        <div class="seal-bar">
+          <div class="seal-label">Sealed handoff</div>
+          <div class="seal-cols">
+            <div class="seal-col"><span class="eyebrow">Crosses to the gate</span>
+              <div class="seal-list">the population and effect inputs<br>the design you chose, and its runtime</div></div>
+            <div class="seal-col"><span class="eyebrow">Does not cross</span>
+              <div class="seal-list withheld">how the other designs scored<br>which design was fastest</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-head"><span class="stage-num g">Stage 2</span><span class="stage-title">Validity gate</span></div>
+      <p class="stage-sub">An independent ruleset. It never sees which design was quickest, so speed cannot argue its way past a design that will not produce a trustworthy answer.</p>
+
+      <div class="gate-card">
+        <div class="gate-verdict">
+          <span class="stamp" id="stamp">&nbsp;</span>
+          <p id="stampNote"></p>
+        </div>
+        <div class="scroll">
+          <table class="rules">
+            <thead><tr><th>Rule</th><th>Test</th><th>Finding</th><th>Result</th></tr></thead>
+            <tbody id="ruleRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="action">
+        <div class="action-h"><span class="tag-step">Step 04</span><span class="eyebrow">What to do with this</span></div>
+        <div class="action-body" id="action"></div>
+      </div>
+    </main>
+  </div>
+
+  <section class="section">
+    <span class="eyebrow">The counterintuitive one</span>
+    <h2>Bigger households are usually cheaper to test on</h2>
+    <p class="lede" id="paradox"></p>
+  </section>
+
+  <div class="assump">
+    <h3>Method</h3>
+    <ul>
+      <li>Design effect for unequal cluster sizes: <span class="mono">1 + ((CV&sup2; + 1) &middot; m&#772; &minus; 1) &middot; ICC</span>, where m&#772; is mean Circle size and CV its coefficient of variation. Equal size clusters reduce this to the familiar <span class="mono">1 + (m&#772; &minus; 1) &middot; ICC</span>.</li>
+      <li>Sample size per arm, two proportion test at 5% two sided and 80% power: <span class="mono">2(z<sub>&alpha;/2</sub> + z<sub>&beta;</sub>)&sup2; &middot; p&#772;(1&minus;p&#772;) / &delta;&sup2;</span>, then multiplied by the design effect.</li>
+      <li>Variance reduction (CUPED) scales required sample by <span class="mono">1 &minus; &rho;&sup2;</span>, where &rho; is the correlation between the pre period covariate and the metric.</li>
+      <li>Probability a Circle of size m is split by person level assignment: <span class="mono">1 &minus; 0.5<sup>m&minus;1</sup></span>. Same form for a person in m Circles receiving conflicting assignments.</li>
+      <li>Household size and overlap distributions are illustrative, not Life360 data. The structure is what transfers. Replace the distributions with real ones and every number here sharpens.</li>
+    </ul>
+    <h3>Why a separate gate</h3>
+    <ul>
+      <li>A sizing tool answers how long. It cannot answer whether the answer will mean anything, because those pull in opposite directions: every shortcut that buys weeks costs validity. Keeping the two in separate layers is the only way the second one survives a deadline.</li>
+      <li>Companion tool: <a href="https://ianklassen.github.io/tier-placement-desk">Tier Placement Desk</a>, same two stage pattern applied to benefit placement.</li>
+      <li>Built by Ian Klassen. <span class="mono">ian@ihk.ca</span></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+var SIZE_MIX = {
+  small:   { d:{2:0.45,3:0.30,4:0.20,5:0.05} },
+  typical: { d:{2:0.28,3:0.24,4:0.22,5:0.14,6:0.08,7:0.04} },
+  wide:    { d:{2:0.22,3:0.18,4:0.16,5:0.13,6:0.10,7:0.07,8:0.05,10:0.05,12:0.03,15:0.01} }
+};
+var OVERLAP = {
+  low:   { d:{1:0.82,2:0.14,3:0.03,4:0.01} },
+  mixed: { d:{1:0.65,2:0.22,3:0.09,4:0.03,5:0.01} },
+  high:  { d:{1:0.45,2:0.28,3:0.15,4:0.08,5:0.04} }
+};
+var SCHEME_LABEL = { user:"Each person independently", circle:"Each Circle as a unit", cuped:"Each Circle, with variance reduction" };
+var SCHEME_HINT = {
+  user:"Fastest on paper. Only honest when the change is invisible to everyone else in the Circle.",
+  circle:"The whole household gets one experience. Fewer independent units, so the same test runs longer.",
+  cuped:"Same assignment, but past behaviour absorbs some of the noise, which buys back much of the runtime."
+};
+var ICC_HINT = function(v){
+  return v < 8  ? "Barely alike. One member's behaviour says little about the others."
+       : v < 20 ? "Somewhat alike, which is the usual case for households."
+       : v < 32 ? "Quite alike. Households behave as a bloc more often than not."
+       : "Very alike. Each extra member adds little independent information.";
+};
+var Z_A = 1.959964, Z_B = 0.841621;
+
+function moments(d){ var m=0,m2=0,t=0,k; for(k in d){var x=+k,p=d[k];m+=x*p;m2+=x*x*p;t+=p;} m/=t;m2/=t;
+  var v=m2-m*m; return {mean:m, cv:Math.sqrt(v)/m}; }
+function splitShare(d){ var s=0,t=0,k; for(k in d){var m=+k,p=d[k]; s+=p*(1-Math.pow(0.5,m-1)); t+=p;} return s/t; }
+function conflictShare(d){ var s=0,t=0,k; for(k in d){var n=+k,p=d[k]; s+=p*(1-Math.pow(0.5,n-1)); t+=p;} return s/t; }
+function multiShare(d){ var s=0,t=0,k; for(k in d){var n=+k,p=d[k]; if(n>1)s+=p; t+=p;} return s/t; }
+function designEffect(m,cv,icc){ return 1 + ((cv*cv+1)*m - 1)*icc; }
+function nPerArm(p,rel){ var d=p*rel, pb=p+d/2; return 2*Math.pow(Z_A+Z_B,2)*pb*(1-pb)/(d*d); }
+
+function size(o, scheme){
+  var sd = SIZE_MIX[o.sizeMix].d, od = OVERLAP[o.overlap].d;
+  var mo = moments(sd);
+  var de = designEffect(mo.mean, mo.cv, o.icc);
+  var base = nPerArm(o.p, o.mde);
+  var deApplied = scheme==="user" ? 1 : de;
+  var cuped = scheme==="cuped" ? (1 - o.rho*o.rho) : 1;
+  var ind = base * deApplied * cuped;
+  var excl = o.handling==="exclude" ? (1 - multiShare(od)) : 1;
+  var circlesTotal = 2 * ind / mo.mean;
+  var weeks = circlesTotal / (o.weekly * excl);
+  return {
+    mbar:mo.mean, cv:mo.cv, de:deApplied, ind:ind, circlesTotal:circlesTotal, weeks:weeks,
+    split: scheme==="user" ? splitShare(sd) : 0,
+    conflict: (scheme==="user" || o.handling==="exclude") ? 0 : conflictShare(od),
+    excluded: 1-excl, fullDE:de
+  };
+}
+
+/* ---- Stage 2. Sees the inputs and the chosen design's runtime. Never sees the other designs. ---- */
+function gate(o, chosen, r){
+  var R = [], pct = function(x){ return Math.round(x*100)+"%"; };
+
+  R.push(chosen==="user" && o.visible
+    ? { id:"V1", n:"Split households", r:"decline",
+        f:"The change is visible to the whole Circle, and person level assignment would put "+pct(r.split)+" of households into two different experiences at once. That breaks the product for the paying member and contaminates both arms." }
+    : { id:"V1", n:"Split households", r:"pass",
+        f: chosen==="user" ? "The change is private to one person, so splitting a household has no effect on anyone else in it."
+                           : "Everyone in a Circle gets the same experience." });
+
+  R.push(r.weeks > o.horizon
+    ? { id:"V2", n:"Runtime", r:"decline",
+        f:"Needs about "+r.weeks.toFixed(1)+" weeks against a "+o.horizon+" week window. Running it anyway is how inconclusive results get manufactured: the test ends, nothing is significant, and nobody learns anything." }
+    : { id:"V2", n:"Runtime", r:"pass",
+        f:"About "+r.weeks.toFixed(1)+" weeks, inside the "+o.horizon+" week window." });
+
+  R.push(chosen!=="user" && o.handling==="byCircle" && r.conflict > 0.10
+    ? { id:"V3", n:"Conflicting assignment", r:"refer",
+        f:"Roughly "+pct(r.conflict)+" of people belong to more than one Circle and would land in treatment in one and control in another. Pick a stable key, usually their primary Circle, and inherit it everywhere else." }
+    : { id:"V3", n:"Conflicting assignment", r:"pass",
+        f: o.handling==="exclude" ? "Multi Circle members are out of the test, so no one receives conflicting assignment."
+                                  : "Overlap is low enough that conflicting assignment stays inside tolerance." });
+
+  R.push(o.handling==="exclude"
+    ? { id:"V4", n:"Exclusion bias", r:"refer",
+        f:"Leaving out multi Circle members removes "+pct(r.excluded)+" of the pool, and not at random. What is left skews toward simpler household structures, which may be exactly the segment that behaves differently." }
+    : { id:"V4", n:"Exclusion bias", r:"pass", f:"Nobody is excluded, so the sample still represents the population." });
+
+  R.push(o.mde < 0.05
+    ? { id:"V5", n:"Effect below the noise floor", r:"refer",
+        f:"Chasing a "+Math.round(o.mde*100)+"% lift. Seasonality, novelty effects, and word of mouth between Circles in the same community all move results by about that much, and none of them are visible to this design." }
+    : { id:"V5", n:"Effect below the noise floor", r:"pass",
+        f:"A "+Math.round(o.mde*100)+"% target sits clear of ordinary week to week noise." });
+
+  R.push(chosen!=="user" && r.fullDE > 2
+    ? { id:"V6", n:"Assumed clustering cost", r:"refer",
+        f:"The clustering penalty is "+r.fullDE.toFixed(2)+"x, so more than half your sample is paying for an assumption. Measure the within Circle correlation on a past experiment before committing to this runtime." }
+    : { id:"V6", n:"Assumed clustering cost", r:"pass",
+        f: chosen==="user" ? "No clustering penalty applies to person level assignment."
+                           : "Clustering penalty of "+r.fullDE.toFixed(2)+"x, small enough that an imperfect estimate will not move the plan." });
+
+  var verdict = R.some(function(x){return x.r==="decline";}) ? "NOT VALID"
+              : R.some(function(x){return x.r==="refer";})   ? "VALID WITH CAVEATS" : "VALID";
+  return { rules:R, verdict:verdict };
+}
+
+var LEVER = {
+  V1:"Move to Circle level assignment. It costs weeks. It is the only version that produces an answer you can act on.",
+  V2:"Raise the effect you are willing to detect, add variance reduction, widen eligibility, or accept that this question needs a different method than an A/B test."
+};
+var CONDITION = {
+  V3:"Assign on a stable key, usually the person's primary Circle, and inherit that assignment to every other Circle they belong to.",
+  V4:"Report the excluded segment separately, or run a follow up on it, so the result is not quietly generalised to households it never covered.",
+  V5:"Add a pre period A/A run to measure the noise floor, and hold a geographic control back so between Circle spillover is at least bounded.",
+  V6:"Estimate the within Circle correlation from a past experiment before committing the roadmap to this runtime."
+};
+
+var el = function(id){ return document.getElementById(id); };
+var fmt = function(n){ return Math.round(n).toLocaleString(); };
+
+function read(){
+  return {
+    scheme: el("scheme").value,
+    visible: el("visible").value === "yes",
+    handling: el("handling").value,
+    sizeMix: el("sizeMix").value,
+    overlap: el("overlap").value,
+    icc: +el("icc").value/100,
+    weekly: +el("weekly").value,
+    p: +el("p").value/1000,
+    mde: +el("mde").value/100,
+    rho: +el("rho").value/100,
+    horizon: +el("horizon").value
+  };
+}
+
+function nextAction(o, chosen, r, g){
+  var out = "";
+  var summary = '<div class="summary">Design <b>'+SCHEME_LABEL[chosen]+'</b> &middot; '+
+    'Runtime <b>'+r.weeks.toFixed(1)+' weeks</b> &middot; '+
+    'Circles needed <b>'+fmt(r.circlesTotal)+'</b>'+
+    (chosen==="user" ? "" : ' &middot; Clustering penalty <b>'+r.fullDE.toFixed(2)+'x</b>')+'</div>';
+
+  if (g.verdict === "NOT VALID"){
+    var dec = g.rules.filter(function(x){return x.r==="decline";});
+    out += "<p><b>Do not run this design.</b> It would produce a number. The number would not mean what you wanted it to mean, which is worse than not running it, because the organisation acts on it anyway.</p>";
+    out += '<p style="margin-bottom:4px">What is binding:</p><ul>';
+    dec.forEach(function(x){ out += "<li><b>"+x.n+".</b> "+x.f+" "+(LEVER[x.id]||"")+"</li>"; });
+    out += "</ul>";
+    return out + summary;
+  }
+  if (g.verdict === "VALID WITH CAVEATS"){
+    var ref = g.rules.filter(function(x){return x.r==="refer";});
+    out += "<p><b>Run it, once these are handled.</b> The design is sound. These are the things that have to be decided before launch rather than explained after the readout.</p><ul>";
+    ref.forEach(function(x){ out += "<li><b>"+x.n+".</b> "+(CONDITION[x.id]||x.f)+"</li>"; });
+    out += "</ul>";
+    return out + summary;
+  }
+  out += "<p><b>Run it.</b> Every household sees one experience, the runtime fits the window, and nothing in the setup is quietly borrowing against the result.</p>";
+  out += "<p>Before launch: write down the primary metric, the guardrails, and the stopping rule. A design this clean still produces an inconclusive test if the hypothesis was never specific enough to be wrong.</p>";
+  return out + summary;
+}
+
+function render(){
+  var o = read();
+
+  el("iccV").textContent = Math.round(o.icc*100)+"%";
+  el("iccHint").textContent = ICC_HINT(o.icc*100);
+  el("weeklyV").textContent = fmt(o.weekly);
+  el("pV").textContent = (o.p*100).toFixed(1)+"%";
+  el("mdeV").textContent = "+"+Math.round(o.mde*100)+"%";
+  el("rhoV").textContent = o.rho===0 ? "none" : o.rho.toFixed(2);
+  el("horizonV").textContent = o.horizon+" wks";
+  el("schemeHint").textContent = SCHEME_HINT[o.scheme];
+
+  var r = { user:size(o,"user"), circle:size(o,"circle"), cuped:size(o,"cuped") };
+  var mo = moments(SIZE_MIX[o.sizeMix].d);
+  el("mixHint").textContent = "Average " + mo.mean.toFixed(1) + " people per Circle.";
+
+  ["User","Circle","Cuped"].forEach(function(k){
+    var key = k.toLowerCase();
+    el("h"+k).className = (o.scheme===key) ? "chosen" : "";
+  });
+
+  var rows = [
+    ["Valid for this change", function(k,x){
+      var ok = !(k==="user" && o.visible);
+      return '<span class="'+(ok?"good":"bad")+'">'+(ok?"yes":"no")+'</span>'; }],
+    ["Households split in two", function(k,x){
+      return x.split>0 ? '<span class="bad">'+Math.round(x.split*100)+'%</span>' : "none"; }],
+    ["People assigned two ways", function(k,x){
+      return x.conflict>0 ? Math.round(x.conflict*100)+'%' : "none"; }],
+    ["Clustering penalty", function(k,x){ return k==="user" ? "none" : x.de.toFixed(2)+"x"; }],
+    ["Circles needed", function(k,x){ return fmt(x.circlesTotal); }],
+    ["Weeks to a readable result", function(k,x){
+      var cls = x.weeks > o.horizon ? "bad" : "good";
+      return '<span class="headline '+cls+'">'+x.weeks.toFixed(1)+'</span>'; }]
+  ];
+
+  var body = el("cmpBody"); body.innerHTML = "";
+  rows.forEach(function(row){
+    var tr = document.createElement("tr");
+    var html = "<td>"+row[0]+"</td>";
+    ["user","circle","cuped"].forEach(function(k){
+      html += '<td class="'+(o.scheme===k?"chosen":"")+'">'+row[1](k, r[k])+"</td>";
+    });
+    tr.innerHTML = html; body.appendChild(tr);
+  });
+
+  var chosen = r[o.scheme];
+  var g = gate(o, o.scheme, chosen);
+
+  var stamp = el("stamp");
+  stamp.textContent = g.verdict;
+  stamp.className = "stamp " + (g.verdict==="VALID" ? "valid" : g.verdict==="VALID WITH CAVEATS" ? "caveated" : "invalid");
+  el("stampNote").textContent =
+    g.verdict==="VALID" ? "Nothing in the setup undermines the readout. This design answers the question it was built to answer."
+    : g.verdict==="VALID WITH CAVEATS" ? "The design holds, but it does not launch until the flagged decisions are made by name."
+    : "The gate overrides the sizing. This design cannot produce a trustworthy answer no matter how quickly it finishes.";
+
+  var rr = el("ruleRows"); rr.innerHTML = "";
+  g.rules.forEach(function(x){
+    var tr = document.createElement("tr");
+    if (x.r==="pass") tr.className = "quiet";
+    tr.innerHTML = '<td class="rid">'+x.id+'</td><td class="rname">'+x.n+'</td><td class="rfind">'+x.f+'</td>'+
+      '<td><span class="tag '+(x.r==="pass"?"pass":x.r==="refer"?"refer":"decline")+'">'+
+      (x.r==="pass"?"clear":x.r==="refer"?"handle":"stop")+'</span></td>';
+    rr.appendChild(tr);
+  });
+
+  el("action").innerHTML = nextAction(o, o.scheme, chosen, g);
+
+  /* the paradox panel */
+  var small = size({...o, sizeMix:"small"}, "circle"), wide = size({...o, sizeMix:"wide"}, "circle");
+  var flips = wide.weeks > small.weeks;
+  var cross = null;
+  for (var t = 1; t <= 45; t++){
+    var a = size({...o, sizeMix:"small", icc:t/100}, "circle");
+    var b2 = size({...o, sizeMix:"wide",  icc:t/100}, "circle");
+    if (b2.weeks > a.weeks){ cross = t; break; }
+  }
+  var crossText = cross
+    ? "On these settings the two swap places at about <b>" + cross + "%</b> similarity. Drag the slider through that point and watch the ordering invert."
+    : "On these settings large Circles stay ahead across the whole similarity range.";
+  el("paradox").innerHTML = (flips
+    ? "At this level of within Circle similarity the usual advantage has already reversed. Larger Circles carry a clustering penalty of " +
+      wide.fullDE.toFixed(2) + "x against " + small.fullDE.toFixed(2) +
+      "x for small ones, and that now outweighs the extra people each Circle brings, so wide households take about " +
+      wide.weeks.toFixed(1) + " weeks against " + small.weeks.toFixed(1) + "."
+    : "Larger Circles look worse on paper, carrying a clustering penalty of " + wide.fullDE.toFixed(2) +
+      "x against " + small.fullDE.toFixed(2) + "x for small households. They are still faster to test on, about " +
+      wide.weeks.toFixed(1) + " weeks against " + small.weeks.toFixed(1) +
+      ", because each Circle that enters the experiment brings more people with it and that outweighs the variance penalty."
+    ) + " " + crossText +
+    " Which side of that line you are on is not a fact about households, it is a fact about how independently their members behave, and it decides whether large Circles are an asset or a tax on every test you run.";
+}
+
+["scheme","visible","handling","sizeMix","overlap","icc","weekly","p","mde","rho","horizon"].forEach(function(id){
+  el(id).addEventListener("input", render);
+  el(id).addEventListener("change", render);
+});
+render();
+</script>
+</body>
+</html>
