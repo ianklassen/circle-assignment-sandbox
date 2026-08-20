@@ -10,9 +10,9 @@ Built by Ian Klassen.
 
 ## The problem
 
-Life360 sells to Circles but experiments are typically conducted on people. A paywall or a price is visible to everyone in the household, so assigning treatment at the user level means a parent sees one offer and their teenager may see another. That breaks the product for the person already paying and it contaminates both arms of the test.
+Life360 sells to Circles and experiments on people. A paywall or a price is visible to everyone in the household, so assigning treatment at the user level means a parent sees one offer and their teenager sees another. That breaks the product for the person already paying, and it contaminates both arms of the test.
 
-Assigning at the Circle level fixes it, but it may have a cost, because you now have fewer independent units and their sizes vary, which inflates variance and lengthens the test. 
+Assigning at the Circle level fixes it. It also costs you, because you now have fewer independent units and their sizes vary, which inflates variance and lengthens the test. Most teams find this out in week six of an eight week window.
 
 This tool sizes both costs before the test ships.
 
@@ -22,11 +22,27 @@ Three designs measured side by side:
 
 - **Each person independently.** Fastest on paper, and only honest when the change is invisible to everyone else in the Circle.
 - **Each Circle as a unit.** Valid for anything household visible. Slower.
-- **Each Circle, adjusting for past behaviour.** Identical assignment. The difference is in the analysis: what a Circle did before the test starts is used to subtract differences that were already there, so what is left is a cleaner read on the change itself. Less noise means a shorter test. The technique is usually called Controlled-Experiment Using Pre-Existing Data (CUPED). It only helps if past behaviour actually predicts the metric, and it does nothing for Circles with no history.
+- **Each Circle, adjusting for past behaviour.** Identical assignment. The difference is in the analysis: what a Circle did before the test starts is used to subtract differences that were already there, so what is left is a cleaner read on the change itself. Less noise means a shorter test. The technique is usually called CUPED. It only helps if past behaviour actually predicts the metric, and it does nothing for Circles with no history.
 
 For each: how many households get split, how many people receive conflicting assignment, the clustering penalty, Circles required, and weeks to a readable result.
 
 Then an independent validity gate rules on the design you chose. It never sees which design was fastest.
+
+## What it assumes
+
+Sizing an experiment always fixes a set of choices. These are stated on the page rather than buried in the code.
+
+**What is being measured.** A yes or no outcome per person, such as converted or did not, rather than a continuous metric. The outcome is attributed to each person and then aggregated, so Circle members each count as an observation. One primary metric; guardrails are not sized.
+
+**How the test is run.** Two arms split evenly, fixed horizon read once at the end, 5% significance two sided, 80% power, and one experiment at a time on the surface. Checking results early without a sequential method inflates false positives, and none of these runtimes account for that.
+
+**Who is counted.** Every Circle entering is actually exposed to the change, weekly traffic holds steady, and the household size and overlap distributions are illustrative.
+
+### The assumption that matters most
+
+The outcome is counted per person. If what you actually measure is whether a *household* subscribes, each Circle becomes a single observation: Circle size stops adding statistical power and the clustering penalty disappears entirely, because there is nothing left to cluster.
+
+That is a different calculation from the one this tool performs, and it is the first thing to settle before sizing anything. Both cases are real in a household product. Paywall taps and feature engagement are per person. Subscription conversion is per Circle.
 
 ## Method
 
