@@ -4,7 +4,7 @@ Experiment design sizing for a product where the billable unit is a household ra
 
 **Live demo:** https://ianklassen.github.io/circle-assignment-sandbox
 
-Built by Ian Klassen. Single HTML file, no build step, no dependencies beyond two web fonts.
+Built by Ian Klassen. 
 
 ---
 
