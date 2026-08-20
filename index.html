@@ -45,6 +45,22 @@ body{background:var(--ground);color:var(--ink);font-family:var(--f-body);font-si
 .stepn{font-family:var(--f-data);font-size:11px;letter-spacing:.14em;color:var(--gate);display:block;margin-bottom:6px}
 .step h3{font-family:var(--f-display);font-weight:600;font-size:14.5px;margin:0 0 4px}
 .step p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.45}
+.assumes{border:1px solid var(--rule);background:var(--paper);border-radius:2px;margin-top:26px}
+.assumes-h{padding:13px 20px;border-bottom:1px solid var(--rule-2);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.assumes-h .eyebrow{margin:0}
+.assumes-h span.note{font-size:13.5px;color:var(--ink-2)}
+.assumes-cols{display:grid;grid-template-columns:repeat(3,1fr)}
+.assumes-cols > div{padding:16px 20px 18px}
+.assumes-cols > div + div{border-left:1px solid var(--rule-2)}
+.assumes-cols h4{font-family:var(--f-display);font-size:12.5px;font-weight:600;margin:0 0 9px;letter-spacing:.01em}
+.assumes-cols ul{margin:0;padding-left:16px}
+.assumes-cols li{font-size:13px;line-height:1.5;color:var(--ink-2);margin-bottom:6px}
+.assumes-cols li b{color:var(--ink);font-weight:600}
+.assumes-foot{padding:14px 20px 16px;border-top:1px solid var(--rule-2);background:rgba(160,106,18,.05)}
+.assumes-foot p{margin:0;font-size:13.5px;line-height:1.5;color:var(--ink-2)}
+.assumes-foot b{color:var(--ink);font-weight:600}
+.rowdef{display:block;font-size:11.5px;line-height:1.35;color:var(--ink-2);margin-top:2px;font-family:var(--f-body)}
+.cmp td.neutral{color:var(--ink-2)}
 .tag-step{font-family:var(--f-data);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--gate);border:1px solid var(--gate);padding:2px 6px;border-radius:2px;margin-right:8px}
 
 .grid{display:grid;grid-template-columns:330px 1fr}
@@ -135,6 +151,8 @@ tr.quiet td{opacity:.5}
   .step{padding:14px 0}
   .step + .step{padding-left:0;border-left:0;border-top:1px solid var(--rule-2)}
   .seal-cols{grid-template-columns:1fr}
+  .assumes-cols{grid-template-columns:1fr}
+  .assumes-cols > div + div{border-left:0;border-top:1px solid var(--rule-2)}
   .wrap{padding:0 16px 72px}
   .masthead{padding:36px 0 24px}
 }
@@ -169,6 +187,47 @@ tr.quiet td{opacity:.5}
         <p>Then an independent validity gate rules on the design you picked. It does not care how fast
         the design is. <b>The fastest design and the trustworthy one are rarely the same design</b>, and
         the gate is what stops you shipping the fast one.</p>
+      </div>
+    </div>
+
+    <div class="assumes">
+      <div class="assumes-h">
+        <span class="eyebrow">What this assumes</span>
+        <span class="note">Sizing an experiment always fixes a set of choices. These are the ones fixed here, stated rather than buried.</span>
+      </div>
+      <div class="assumes-cols">
+        <div>
+          <h4>What is being measured</h4>
+          <ul>
+            <li>A <b>yes or no outcome per person</b>, such as converted or did not, rather than a continuous metric like revenue or days retained.</li>
+            <li>The outcome is attributed to <b>each person</b>, then aggregated. Circle members each count as an observation.</li>
+            <li>One primary metric. Guardrails are not sized here.</li>
+          </ul>
+        </div>
+        <div>
+          <h4>How the test is run</h4>
+          <ul>
+            <li><b>Two arms, split evenly.</b> Control and one variant.</li>
+            <li><b>Fixed horizon.</b> Read once at the end. Checking early without a sequential method inflates false positives, and none of these runtimes account for that.</li>
+            <li>5% significance, two sided, and 80% power.</li>
+            <li>One experiment at a time on this surface, with no overlap from another live test.</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Who is counted</h4>
+          <ul>
+            <li>Every Circle entering the experiment is <b>actually exposed</b> to the change. Real eligibility filters dilute this and lengthen the run.</li>
+            <li>Weekly traffic holds <b>steady</b>. No seasonality, no ramp, no marketing spike.</li>
+            <li>Household size and Circle overlap distributions are <b>illustrative</b>, not Life360 data.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="assumes-foot">
+        <p><b>The assumption that matters most:</b> the outcome is counted per person. If what you actually measure is
+        whether a <i>household</i> subscribes, then each Circle is a single observation, Circle size stops adding
+        statistical power, and the clustering penalty disappears because there is nothing left to cluster. That is a
+        different calculation from the one on this page, and knowing which of the two you are in is the first question
+        to settle before sizing anything.</p>
       </div>
     </div>
 
@@ -531,16 +590,30 @@ function render(){
   });
 
   var rows = [
-    ["Valid for this change", function(k,x){
+    ["Valid for this change",
+     "Whether the design can produce an answer worth acting on for a change of this kind.",
+     function(k,x){
       var ok = !(k==="user" && o.visible);
       return '<span class="'+(ok?"good":"bad")+'">'+(ok?"yes":"no")+'</span>'; }],
-    ["Households split in two", function(k,x){
-      return x.split>0 ? '<span class="bad">'+Math.round(x.split*100)+'%</span>' : "none"; }],
-    ["People assigned two ways", function(k,x){
+    ["Households split in two",
+     "Share of Circles whose members would land in different arms. A person level coin flip keeps a household whole only if everyone lands the same way.",
+     function(k,x){
+      if (x.split<=0) return "none";
+      var pct = Math.round(x.split*100)+"%";
+      return o.visible ? '<span class="bad">'+pct+'</span>' : pct+' <span style="opacity:.7">(no one notices)</span>'; }],
+    ["People assigned two ways",
+     "Share of people belonging to several Circles who would sit in treatment in one and control in another.",
+     function(k,x){
       return x.conflict>0 ? Math.round(x.conflict*100)+'%' : "none"; }],
-    ["Clustering penalty", function(k,x){ return k==="user" ? "none" : x.de.toFixed(2)+"x"; }],
-    ["Circles needed", function(k,x){ return fmt(x.circlesTotal); }],
-    ["Weeks to a readable result", function(k,x){
+    ["Clustering penalty",
+     "Extra sample needed because Circle members do not behave independently. The fourth person in a household carries less new information than a fourth stranger. Known formally as the design effect.",
+     function(k,x){ return k==="user" ? "none" : x.de.toFixed(2)+"x"; }],
+    ["Circles needed",
+     "Total across both arms, at the baseline and lift you set.",
+     function(k,x){ return fmt(x.circlesTotal); }],
+    ["Weeks to a readable result",
+     "Circles needed divided by the weekly traffic you set. Red means it does not fit your window.",
+     function(k,x){
       var cls = x.weeks > o.horizon ? "bad" : "good";
       return '<span class="headline '+cls+'">'+x.weeks.toFixed(1)+'</span>'; }]
   ];
@@ -548,9 +621,11 @@ function render(){
   var body = el("cmpBody"); body.innerHTML = "";
   rows.forEach(function(row){
     var tr = document.createElement("tr");
-    var html = "<td>"+row[0]+"</td>";
+    var html = "<td>"+row[0]+'<span class="rowdef">'+row[1]+"</span></td>";
     ["user","circle","cuped"].forEach(function(k){
-      html += '<td class="'+(o.scheme===k?"chosen":"")+'">'+row[1](k, r[k])+"</td>";
+      var cls = (o.scheme===k?"chosen":"");
+      if (row[0]==="Households split in two" && !o.visible) cls += " neutral";
+      html += '<td class="'+cls+'">'+row[2](k, r[k])+"</td>";
     });
     tr.innerHTML = html; body.appendChild(tr);
   });
