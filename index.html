@@ -178,7 +178,7 @@ tr.quiet td{opacity:.5}
         Assign at the user level and a parent sees one offer while their teenager sees another, which
         breaks the product and contaminates the readout.</p>
         <p>Assign at the Circle level and the readout is clean, but you now have fewer independent units
-        and their sizes vary, so <b>the same test takes longer</b>. Most teams discover that in week six.</p>
+        and their sizes vary, so <b>the same test takes longer</b>. That cost is worth knowing at the point the test is designed rather than the point it is read.</p>
       </div>
       <div>
         <span class="eyebrow">What you get out of it</span>
@@ -470,7 +470,7 @@ function gate(o, chosen, r){
 
   R.push(r.weeks > o.horizon
     ? { id:"V2", n:"Runtime", r:"decline",
-        f:"Needs about "+r.weeks.toFixed(1)+" weeks against a "+o.horizon+" week window. Running it anyway is how inconclusive results get manufactured: the test ends, nothing is significant, and nobody learns anything." }
+        f:"Needs about "+r.weeks.toFixed(1)+" weeks against a "+o.horizon+" week window. Run inside that window and the likely outcome is an inconclusive result: the test ends, nothing reaches significance, and the question is still open." }
     : { id:"V2", n:"Runtime", r:"pass",
         f:"About "+r.weeks.toFixed(1)+" weeks, inside the "+o.horizon+" week window." });
 
@@ -510,7 +510,7 @@ var LEVER = {
 };
 var CONDITION = {
   V3:"Assign on a stable key, usually the person's primary Circle, and inherit that assignment to every other Circle they belong to.",
-  V4:"Report the excluded segment separately, or run a follow up on it, so the result is not quietly generalised to households it never covered.",
+  V4:"Report the excluded segment separately, or run a follow up on it, so the result is applied only to the households it actually covered.",
   V5:"Add a pre period A/A run to measure the noise floor, and hold a geographic control back so between Circle spillover is at least bounded.",
   V6:"Estimate the within Circle correlation from a past experiment before committing the roadmap to this runtime."
 };
@@ -556,7 +556,7 @@ function nextAction(o, chosen, r, g){
     out += "</ul>";
     return out + summary;
   }
-  out += "<p><b>Run it.</b> Every household sees one experience, the runtime fits the window, and nothing in the setup is quietly borrowing against the result.</p>";
+  out += "<p><b>Run it.</b> Every household sees one experience, the runtime fits the window, and nothing in the setup is trading validity for speed.</p>";
   out += "<p>Before launch: write down the primary metric, the guardrails, and the stopping rule. A design this clean still produces an inconclusive test if the hypothesis was never specific enough to be wrong.</p>";
   return out + summary;
 }
